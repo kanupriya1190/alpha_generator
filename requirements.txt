@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pandas
+numpy
+yfinance
+pandas_datareader
+requests
+streamlit
+python-dotenv
