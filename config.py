@@ -15,7 +15,9 @@ load_dotenv()
 
 @dataclass
 class Settings:
-    symbols: List[str] = field(default_factory=lambda: ["AAPL", "MSFT", "NVDA", "SPY"])
+    symbols: List[str] = field(
+        default_factory=lambda: ["NVDA", "MSFT", "GOOG", "TLT", "CRWV", "NBIS", "BE"]
+    )
     start_date: date = date(2020, 1, 1)
     end_date: date = date(2025, 12, 31)
 
@@ -24,8 +26,8 @@ class Settings:
     fee_bps: float = 5.0  # 0.05%
     max_portfolio_drawdown: float = 0.10
     stop_loss_pct: float = 0.02
-    max_position_pct: float = 0.10
-    base_position_pct: float = 0.02
+    max_position_pct: float = 0.25
+    base_position_pct: float = 0.08
 
     data_dir: Path = Path("data")
     output_dir: Path = Path("outputs")

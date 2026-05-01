@@ -92,19 +92,25 @@ class DataPipeline:
         raw = yf.download(symbol, start=start, end=end, auto_adjust=False, progress=False)
         if raw.empty:
             raise ValueError(f"No data from yfinance for {symbol}")
+
+        # yfinance may return MultiIndex columns: (Price, Ticker). Normalize to flat columns.
+        if isinstance(raw.columns, pd.MultiIndex):
+            raw.columns = [c[0].lower() for c in raw.columns]
+        else:
+            raw.columns = [str(c).lower() for c in raw.columns]
+
         raw = raw.rename(
             columns={
-                "Open": "open",
-                "High": "high",
-                "Low": "low",
-                "Close": "close",
-                "Volume": "volume",
+                "adj close": "adj_close",
             }
         )
+        required_cols = {"open", "high", "low", "close", "volume"}
+        if not required_cols.issubset(set(raw.columns)):
+            raise ValueError(f"Unexpected yfinance columns for {symbol}: {list(raw.columns)}")
         raw["vwap"] = np.nan
         raw["trade_count"] = np.nan
         raw["symbol"] = symbol
-        raw = raw.reset_index().rename(columns={"Date": "date"})
+        raw = raw.reset_index().rename(columns={"Date": "date", "date": "date"})
         return raw[["date", "symbol", "open", "high", "low", "close", "volume", "vwap", "trade_count"]]
 
     def _generate_synthetic_market_data(self, symbol: str, start: datetime, end: datetime) -> pd.DataFrame:

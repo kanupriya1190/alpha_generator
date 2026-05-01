@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import numpy as np
 import pandas as pd
@@ -24,7 +25,7 @@ class Position:
 class Backtester:
     orchestrator: Orchestrator = field(default_factory=Orchestrator)
 
-    def run(self, features: pd.DataFrame) -> Dict[str, float]:
+    def run(self, features: pd.DataFrame) -> Dict[str, Any]:
         SETTINGS.ensure_dirs()
         df = features.sort_values(["date", "symbol"]).copy()
         dates = sorted(df["date"].unique())
@@ -128,6 +129,14 @@ class Backtester:
         equity_curve = pd.DataFrame(equity_records)
         trades = pd.DataFrame(trade_records)
         metrics = self._metrics(equity_curve, daily_returns, trades)
+        metrics.update(
+            {
+                "symbols": SETTINGS.symbols,
+                "start_date": str(SETTINGS.start_date),
+                "end_date": str(SETTINGS.end_date),
+                "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+            }
+        )
 
         equity_curve.to_csv(SETTINGS.equity_curve_path, index=False)
         trades.to_csv(SETTINGS.trades_path, index=False)

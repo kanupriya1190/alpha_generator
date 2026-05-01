@@ -8,7 +8,7 @@ from typing import Dict, List
 import numpy as np
 import pandas as pd
 
-from agents import MacroRiskAgent, MeanReversionAgent, MomentumAgent, SentimentAgent
+from agents import BondYieldAgent, MacroRiskAgent, MeanReversionAgent, MomentumAgent, SentimentAgent
 from config import SETTINGS
 
 
@@ -17,12 +17,14 @@ class Orchestrator:
     momentum_agent: MomentumAgent = field(default_factory=MomentumAgent)
     mean_reversion_agent: MeanReversionAgent = field(default_factory=MeanReversionAgent)
     sentiment_agent: SentimentAgent = field(default_factory=SentimentAgent)
+    bond_yield_agent: BondYieldAgent = field(default_factory=BondYieldAgent)
     macro_risk_agent: MacroRiskAgent = field(default_factory=MacroRiskAgent)
     weights: Dict[str, float] = field(
         default_factory=lambda: {
-            "momentum": 0.35,
-            "mean_reversion": 0.20,
-            "sentiment": 0.30,
+            "momentum": 0.28,
+            "mean_reversion": 0.17,
+            "sentiment": 0.22,
+            "bond_yield": 0.18,
             "macro_risk": 0.15,
         }
     )
@@ -32,6 +34,7 @@ class Orchestrator:
             self.momentum_agent.generate(row),
             self.mean_reversion_agent.generate(row),
             self.sentiment_agent.generate(row),
+            self.bond_yield_agent.generate(row),
             self.macro_risk_agent.generate(row),
         ]
 
@@ -48,7 +51,7 @@ class Orchestrator:
         elif weighted_score < -0.15:
             final_signal = "SELL"
 
-        macro_signal = signals[-1]
+        macro_signal = next((s for s in signals if s["agent"] == "macro_risk"), {"risk_multiplier": 1.0})
         macro_mult = float(macro_signal.get("risk_multiplier", 1.0))
         drawdown_mult = max(0.2, 1 - current_drawdown / SETTINGS.max_portfolio_drawdown)
         confidence_mult = float(np.clip(weighted_conf, 0.2, 1.0))

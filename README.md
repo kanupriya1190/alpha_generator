@@ -1,19 +1,125 @@
 # Multi-Agent Alpha Generator
 
-End-to-end trading system that ingests market/macro/sentiment data, engineers features, generates signals with 4 specialized agents, runs a realistic backtest, serves live predictions, and visualizes performance in Streamlit.
+End-to-end alpha system for:
+- historical backtesting,
+- live paper-trading on Alpaca,
+- multi-agent signal generation,
+- risk-managed portfolio rebalancing,
+- and Streamlit monitoring.
+
+## GitHub Front Page Highlights
+
+- Multi-agent strategy with momentum, mean reversion, sentiment, bond-yield, and macro-risk agents
+- Live Alpaca paper-trading (account sync, orders, positions, and rebalancing)
+- Stats-arbitrage pair diagnostics with target-weight portfolio adjustments
+- Full backtesting + API + Streamlit dashboard in one repo
+
+### Alpaca Integration At A Glance
+
+This project uses Alpaca Paper Trading directly (runtime does not require MCP):
+- Auth via `ALPACA_API_KEY` + `ALPACA_SECRET_KEY`
+- Pulls account, positions, and orders
+- Places market orders from strategy output
+- Supports `dry_run` and live execution
+
+## What This Project Does
+
+This project:
+1. Ingests market, macro, and sentiment-related inputs.
+2. Builds engineered features.
+3. Produces `BUY / SELL / HOLD` with an ensemble of rule-based agents.
+4. Sizes positions with risk controls.
+5. Backtests over multi-year history.
+6. Runs live paper-trading with optional stats-arbitrage adjustments.
+7. Exposes API + dashboard for monitoring and execution.
+
+---
+
+## Current Universe
+
+Configured symbols (in `config.py`):
+- `NVDA`
+- `MSFT`
+- `GOOG`
+- `TLT` (bond ETF)
+- `CRWV` (CoreWeave)
+- `NBIS` (Nebius)
+- `BE` (Bloom Energy)
+
+---
 
 ## Architecture
 
-- `data_pipeline.py` - Market/macro/sentiment ingestion and data validation
-- `features.py` - 30+ engineered features (momentum, volatility, macro, sentiment)
-- `agents.py` - Momentum, Mean Reversion, Sentiment, Macro Risk agents
-- `orchestrator.py` - Weighted signal ensemble + position sizing + drawdown brakes
-- `backtester.py` - Event-style 2020-2025 walk-forward simulation with fees/slippage
-- `api.py` - FastAPI service (`POST /predict`)
-- `dashboard.py` - Streamlit dashboard (results, signal analysis, replay, live prediction)
-- `backtest.py` - One-command local backtest runner
+- `config.py` - central settings (symbols, dates, risk limits, paths, keys)
+- `data_pipeline.py` - market/macro/sentiment data ingestion + storage
+- `features.py` - feature engineering (momentum, volatility, macro, sentiment)
+- `agents.py` - strategy agents (momentum, mean reversion, sentiment, bond yield, macro risk)
+- `orchestrator.py` - weighted signal ensemble + confidence + sizing
+- `backtester.py` - historical simulation + performance metrics
+- `live_trader.py` - Alpaca paper execution + rebalance + stats-arb
+- `live_trade.py` - CLI wrapper for one-cycle live run
+- `api.py` - FastAPI inference + live trading endpoints
+- `dashboard.py` - Streamlit frontend
 
-## Quickstart
+---
+
+## Signal Logic (Important)
+
+Final signal is generated from weighted agent scores:
+- **Momentum Agent**: trend-following
+- **Mean Reversion Agent**: z-score/volume contrarian
+- **Sentiment Agent**: sentiment + sentiment momentum + price momentum
+- **Bond Yield Agent**: yield-regime logic (equities vs bond ETFs)
+- **Macro Risk Agent**: VIX and macro stress risk scaling
+
+Then orchestrator decides:
+- `BUY` if ensemble score > `0.15`
+- `SELL` if ensemble score < `-0.15`
+- `HOLD` otherwise
+
+Position sizing is dynamic via confidence, macro-risk multiplier, and drawdown guardrails.
+
+---
+
+## How Sentiment Is Currently Run
+
+Sentiment is currently **proxy-based**, not direct NLP from NewsAPI yet:
+
+### Backtest / Data Pipeline
+In `data_pipeline.py` (`fetch_sentiment_data`):
+- computes `ret_3d` and `ret_10d` per symbol
+- blends them into a proxy sentiment score
+- maps score into `[0, 1]`
+
+### Live Trading
+In `live_trader.py` (`_build_signal_row`):
+- computes proxy sentiment from recent price behavior
+- fetches recent ticker-specific headlines from NewsAPI
+- scores those headlines with Hugging Face FinBERT (`ProsusAI/finbert`)
+- blends both into final live `sentiment_score`:
+  - `0.6 * news_sentiment + 0.4 * proxy_sentiment`
+- computes `sentiment_momentum` from rolling sentiment behavior
+
+Fallback behavior:
+- If NewsAPI or FinBERT is unavailable, strategy falls back safely to proxy sentiment.
+
+---
+
+## Stats-Arb + Rebalancing (Live Paper Mode)
+
+Live mode (`live_trader.py`) can:
+- compute pair spread z-scores (stats-arb diagnostics),
+- tilt target weights by pair regime,
+- rebalance current holdings to target weights,
+- enforce directional consistency (e.g., `SELL` -> target weight `0`).
+
+Default in live runs:
+- `use_stats_arb=True`
+- `rebalance=True`
+
+---
+
+## Setup
 
 ```bash
 python -m venv venv
@@ -22,54 +128,149 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Set your keys in `.env`:
-
+Set keys in `.env`:
 - `ALPACA_API_KEY`
 - `ALPACA_SECRET_KEY`
-- optional: `FRED_API_KEY`, `NEWS_API_KEY`
+- `FRED_API_KEY` (recommended)
+- `NEWS_API_KEY` (currently not used directly in signal construction)
+- `NEWS_API_KEY` (used for FinBERT headline sentiment in live mode)
 
-Run full pipeline + backtest:
+Never commit `.env`.
+
+---
+
+## Run Modes
+
+### 1) Backtest
 
 ```bash
 python backtest.py
 ```
 
-Run API:
+To force a clean recalculation for the currently configured portfolio universe:
+
+```bash
+python recalculate_portfolio.py
+```
+
+Outputs:
+- `data/features.csv`
+- `outputs/equity_curve.csv`
+- `outputs/trades.csv`
+- `outputs/metrics.json`
+
+### 2) API
 
 ```bash
 uvicorn api:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Run dashboard:
+### 3) Dashboard
 
 ```bash
 streamlit run dashboard.py
 ```
 
-## API Example
+### 4) One-shot live trading cycle (CLI)
 
 ```bash
-curl -X POST http://localhost:8000/predict \
+# Dry run (no orders)
+python live_trade.py
+
+# Submit paper orders
+python live_trade.py --execute
+
+# Optional toggles
+python live_trade.py --no-stats-arb
+python live_trade.py --no-rebalance
+```
+
+### 5) Daily automated live run (macOS launchd)
+
+This repo includes a scheduler script for macOS:
+
+```bash
+# default schedule: every day at 09:35 local time
+./setup_launchd_schedule.sh
+
+# custom schedule: every day at HH:MM local time
+./setup_launchd_schedule.sh 10 15
+```
+
+It runs:
+- `run_daily_live_cycle.py` (live paper execution with stats-arb + rebalance)
+
+Logs and run artifacts:
+- `outputs/launchd_daily_stdout.log`
+- `outputs/launchd_daily_stderr.log`
+- `outputs/live_runs/run_*.json`
+
+---
+
+## API Endpoints
+
+Core:
+- `GET /health`
+- `POST /predict`
+
+Paper trading:
+- `GET /paper/account`
+- `GET /paper/positions`
+- `GET /paper/orders`
+- `POST /paper/run-once`
+
+`/paper/run-once` payload:
+```json
+{
+  "dry_run": true,
+  "use_stats_arb": true,
+  "rebalance": true
+}
+```
+
+Example live paper execution:
+```bash
+curl -X POST http://127.0.0.1:8000/paper/run-once \
   -H "Content-Type: application/json" \
   -d '{
-    "symbol":"AAPL",
-    "price":185.0,
-    "momentum_10d":0.03,
-    "momentum_20d":0.02,
-    "sentiment_score":0.72,
-    "vix":19.5
+    "dry_run": false,
+    "use_stats_arb": true,
+    "rebalance": true
   }'
 ```
 
-## Outputs
+---
 
-- `data/features.csv` - full feature set
-- `outputs/equity_curve.csv` - day-level portfolio value and drawdown
-- `outputs/trades.csv` - trade log
-- `outputs/metrics.json` - annual return, Sharpe, max drawdown, win rate
+## Dashboard Tabs
+
+- **Backtest Results**: equity curves + metrics
+- **Signal Performance**: trade distribution and recent trades
+- **Agent Comparison**: per-agent score/signal snapshot
+- **Live Predictions**: manual prediction + Alpaca paper controls
+- **Replay**: step-through historical equity path
+
+---
+
+## Troubleshooting
+
+- `401` on Alpaca endpoints:
+  - regenerate paper key+secret pair,
+  - update `.env`,
+  - restart API/dashboard.
+
+- No positions on Alpaca:
+  - ensure you ran live mode with `dry_run=false`,
+  - check `/paper/orders` for status (`new`, `partially_filled`, `filled`).
+
+- Flat or odd backtest:
+  - run backtest again after symbol/config updates,
+  - confirm output artifacts were regenerated.
+
+---
 
 ## Notes
 
-- The system prefers Alpaca bars when credentials are present and falls back to yfinance.
 - Backtest includes slippage (0.10%) and fees (0.05%).
-- Secrets are loaded from environment variables; never commit `.env`.
+- Market data priority: Alpaca -> yfinance -> synthetic fallback.
+- Macro data priority: FRED -> fallback constants.
+- Live mode uses NewsAPI headlines + FinBERT sentiment scoring, with proxy fallback if unavailable.

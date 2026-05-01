@@ -7,3 +7,5 @@ pandas_datareader
 requests
 streamlit
 python-dotenv
+transformers
+torch

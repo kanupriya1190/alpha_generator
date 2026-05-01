@@ -66,6 +66,37 @@ class SentimentAgent:
 
 
 @dataclass
+class BondYieldAgent:
+    """Yield-aware agent that supports both equities and bond ETFs."""
+
+    bond_symbols: tuple = ("TLT", "IEF", "BND", "AGG")
+
+    def generate(self, row: pd.Series) -> Signal:
+        symbol = str(row.get("symbol", "")).upper()
+        dgs10 = float(row.get("dgs10", row.get("yield_10y", 3.5)))
+        dgs2 = float(row.get("dgs2", row.get("yield_2y", 3.0)))
+        fedfunds = float(row.get("fedfunds", 4.5))
+        yield_curve = float(row.get("yield_curve_slope", dgs10 - dgs2))
+        dgs10_change_21d = float(row.get("yield_10y_change_21d", row.get("dgs10_change_21d", 0.0)))
+
+        is_bond = symbol in self.bond_symbols
+        score = 0.0
+        if is_bond:
+            # Bond ETFs generally benefit when long rates fall.
+            score += -1.2 * dgs10_change_21d
+            score += -0.25 * max(0.0, dgs10 - fedfunds)
+            score += 0.15 if yield_curve < 0 else -0.05
+        else:
+            # Equities can be pressured by rapid yield rises.
+            score += -0.8 * dgs10_change_21d
+            score += -0.2 * max(0.0, dgs10 - 4.5)
+            score += 0.1 if yield_curve > 0 else -0.1
+
+        signal = _label_from_score(score, buy_thresh=0.12, sell_thresh=-0.12)
+        return {"agent": "bond_yield", "signal": signal, "score": score, "confidence": _confidence(score)}
+
+
+@dataclass
 class MacroRiskAgent:
     """Market regime and risk scaler."""
 

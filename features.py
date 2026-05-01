@@ -70,6 +70,7 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     out["volume_ratio"] = out["volume"] / out["volume_ma_20"]
 
     out["yield_curve_slope"] = out["dgs10"] - out["dgs2"]
+    out["yield_10y_change_21d"] = out.groupby("symbol")["dgs10"].diff(21)
     out["inflation_1m_change"] = out.groupby("symbol")["cpi"].pct_change(21)
     out["fedfunds_change_1m"] = out.groupby("symbol")["fedfunds"].diff(21)
     out["vix_change_5d"] = out.groupby("symbol")["vix"].diff(5)

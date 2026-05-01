@@ -9,7 +9,9 @@ import pandas as pd
 import streamlit as st
 
 from backtester import Backtester
+from config import SETTINGS
 from features import run_features
+from live_trader import AlpacaPaperClient, LiveTrader
 from orchestrator import Orchestrator
 
 st.set_page_config(page_title="Multi-Agent Alpha Generator", layout="wide")
@@ -41,7 +43,7 @@ features = _load_artifact("data/features.csv")
 metrics = _load_metrics("outputs/metrics.json")
 
 with st.sidebar:
-    if st.button("Run Full Backtest", type="primary"):
+    if st.button("Recalculate Backtest (Current Portfolio)", type="primary"):
         with st.spinner("Running pipeline + backtest..."):
             feature_df = run_features()
             bt = Backtester()
@@ -50,13 +52,30 @@ with st.sidebar:
             trades = _load_artifact("outputs/trades.csv")
             features = _load_artifact("data/features.csv")
         st.success("Backtest completed.")
+    st.caption("Current symbols: " + ", ".join(SETTINGS.symbols))
 
 with tab1:
     st.subheader("Portfolio Equity Curve")
+    metric_symbols = metrics.get("symbols", [])
+    if metric_symbols and sorted(metric_symbols) != sorted(SETTINGS.symbols):
+        st.warning(
+            "Metrics were generated for a different symbol set. "
+            "Click 'Recalculate Backtest (Current Portfolio)' to refresh Sharpe/return values."
+        )
+    if metrics.get("generated_at_utc"):
+        st.caption(f"Metrics generated at (UTC): {metrics.get('generated_at_utc')}")
+
     if not equity_curve.empty:
         chart_df = equity_curve.copy()
         chart_df["date"] = pd.to_datetime(chart_df["date"])
+        st.caption("Absolute equity ($)")
         st.line_chart(chart_df.set_index("date")["equity"])
+
+        indexed = chart_df[["date", "equity"]].copy()
+        start = float(indexed["equity"].iloc[0]) if len(indexed) else 1.0
+        indexed["equity_indexed"] = 100 * indexed["equity"] / max(start, 1e-9)
+        st.caption("Indexed equity (starts at 100) to better visualize changes")
+        st.line_chart(indexed.set_index("date")["equity_indexed"])
     else:
         st.info("Run backtest to generate equity curve.")
 
@@ -65,6 +84,9 @@ with tab1:
     cols[1].metric("Sharpe Ratio", f"{metrics.get('sharpe_ratio', 0):.2f}")
     cols[2].metric("Max Drawdown", f"{100 * metrics.get('max_drawdown', 0):.2f}%")
     cols[3].metric("Win Rate", f"{100 * metrics.get('win_rate', 0):.2f}%")
+    cols_extra = st.columns(2)
+    cols_extra[0].metric("End Equity", f"${metrics.get('end_equity', 0):,.2f}")
+    cols_extra[1].metric("Trades", f"{int(metrics.get('num_trades', 0))}")
 
 with tab2:
     st.subheader("Signal Performance")
@@ -93,6 +115,24 @@ with tab3:
 
 with tab4:
     st.subheader("Live Prediction")
+    with st.expander("How BUY / SELL / HOLD is decided"):
+        st.markdown(
+            """
+            - **Momentum Agent**: stronger recent returns -> more bullish score.
+            - **Mean Reversion Agent**: extreme z-score (overbought/oversold) -> contrarian score.
+            - **Sentiment Agent**: positive sentiment + sentiment momentum -> bullish score.
+            - **Macro Risk Agent**: high VIX/macro stress reduces risk and can turn defensive.
+
+            Final decision comes from weighted score:
+            - **BUY** when combined score > `0.15`
+            - **SELL** when combined score < `-0.15`
+            - **HOLD** otherwise
+
+            In live paper trading, we then convert this into **target portfolio weights**, optionally
+            apply **stats-arbitrage pair adjustments**, and send rebalance orders.
+            """
+        )
+
     symbol = st.text_input("Symbol", value="AAPL")
     price = st.number_input("Price", value=180.0)
     momentum_10d = st.number_input("Momentum 10d", value=0.01, step=0.01, format="%.4f")
@@ -122,6 +162,76 @@ with tab4:
             f"Position Size: {100*pred['position_size']:.2f}%"
         )
         st.json(pred)
+
+    st.divider()
+    st.subheader("Alpaca Paper Trading")
+    client = AlpacaPaperClient()
+    if not client.enabled:
+        st.warning("Missing `ALPACA_API_KEY` or `ALPACA_SECRET_KEY` in `.env`.")
+    else:
+        st.caption("Run controls")
+        use_stats_arb = st.checkbox("Enable stats-arbitrage allocation tweaks", value=True)
+        rebalance = st.checkbox("Enable target-weight rebalancing", value=True)
+        action_col1, action_col2 = st.columns(2)
+        run_dry = action_col1.button("Run Signal Scan (Dry Run)")
+        run_live = action_col2.button("Execute Paper Orders")
+
+        result = None
+        if run_dry:
+            with st.spinner("Running dry-run signal scan..."):
+                result = LiveTrader().run_once(dry_run=True, use_stats_arb=use_stats_arb, rebalance=rebalance)
+        if run_live:
+            with st.spinner("Submitting market orders to Alpaca paper account..."):
+                result = LiveTrader().run_once(dry_run=False, use_stats_arb=use_stats_arb, rebalance=rebalance)
+
+        try:
+            account = client.get_account()
+            a1, a2, a3, a4 = st.columns(4)
+            a1.metric("Equity", f"${float(account.get('equity', 0)):,.2f}")
+            a2.metric("Buying Power", f"${float(account.get('buying_power', 0)):,.2f}")
+            a3.metric("Cash", f"${float(account.get('cash', 0)):,.2f}")
+            a4.metric("Status", str(account.get("status", "unknown")).upper())
+        except Exception as exc:
+            st.error(f"Could not load Alpaca account: {exc}")
+
+        try:
+            positions = pd.DataFrame(client.list_positions())
+            st.markdown("**Open Positions**")
+            if positions.empty:
+                st.info("No open positions.")
+            else:
+                keep_cols = [c for c in ["symbol", "qty", "avg_entry_price", "market_value", "unrealized_pl"] if c in positions.columns]
+                st.dataframe(positions[keep_cols], use_container_width=True)
+        except Exception as exc:
+            st.error(f"Could not load positions: {exc}")
+
+        try:
+            orders = pd.DataFrame(client.list_orders(status="all", limit=25))
+            st.markdown("**Recent Orders**")
+            if orders.empty:
+                st.info("No recent orders.")
+            else:
+                keep_cols = [
+                    c
+                    for c in ["submitted_at", "symbol", "side", "qty", "type", "status", "filled_avg_price"]
+                    if c in orders.columns
+                ]
+                st.dataframe(orders[keep_cols], use_container_width=True)
+        except Exception as exc:
+            st.error(f"Could not load orders: {exc}")
+
+        if result is not None:
+            st.markdown("**Latest Live-Trader Actions**")
+            st.dataframe(pd.DataFrame(result["actions"]), use_container_width=True)
+            if result.get("target_weights"):
+                st.markdown("**Target Weights (%)**")
+                tw = pd.DataFrame(
+                    [{"symbol": k, "target_weight_pct": v} for k, v in result["target_weights"].items()]
+                ).sort_values("target_weight_pct", ascending=False)
+                st.dataframe(tw, use_container_width=True)
+            if result.get("stats_arb"):
+                st.markdown("**Stats-Arbitrage Diagnostics**")
+                st.dataframe(pd.DataFrame(result["stats_arb"]), use_container_width=True)
 
 with tab5:
     st.subheader("Backtest Replay")
