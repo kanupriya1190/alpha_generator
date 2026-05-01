@@ -2,9 +2,9 @@
 
 ## Live Demo & Results
 
-- Live Streamlit Dashboard: _Add your deployed URL here_
-- Public Snapshot Page (for GitHub visitors): `docs/index.html`
-- Latest Snapshot JSON: `docs/live_snapshot.json`
+- Live Streamlit Dashboard: https://your-streamlit-app-url
+- Public Snapshot Page (for GitHub visitors): https://kanupriya1190.github.io/alpha_generator/
+- Latest Snapshot JSON: https://kanupriya1190.github.io/alpha_generator/live_snapshot.json
 
 End-to-end alpha system for:
 - historical backtesting,
