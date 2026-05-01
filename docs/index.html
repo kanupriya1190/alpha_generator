@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Alpha Generator - Live Snapshot</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 24px; color: #111; background: #fafafa; }
+      h1, h2 { margin-bottom: 8px; }
+      .sub { color: #444; margin-bottom: 20px; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 18px; }
+      .card { background: white; border: 1px solid #ddd; border-radius: 10px; padding: 12px; }
+      .k { color: #666; font-size: 13px; margin-bottom: 6px; }
+      .v { font-size: 20px; font-weight: 700; }
+      table { width: 100%; border-collapse: collapse; background: white; border: 1px solid #ddd; border-radius: 10px; overflow: hidden; margin-bottom: 18px; }
+      th, td { text-align: left; border-bottom: 1px solid #eee; padding: 8px 10px; font-size: 14px; }
+      th { background: #f3f4f6; }
+      .muted { color: #666; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    </style>
+  </head>
+  <body>
+    <h1>Multi-Agent Alpha Generator</h1>
+    <div class="sub">Public snapshot of backtest metrics + Alpaca paper results.</div>
+
+    <div id="meta" class="muted"></div>
+
+    <h2>Backtest Metrics</h2>
+    <div class="grid" id="metrics-grid"></div>
+
+    <h2>Paper Account</h2>
+    <div class="grid" id="account-grid"></div>
+
+    <h2>Open Positions</h2>
+    <table id="positions-table">
+      <thead>
+        <tr>
+          <th>Symbol</th><th>Qty</th><th>Avg Entry</th><th>Market Value</th><th>Unrealized P/L</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h2>Recent Orders</h2>
+    <table id="orders-table">
+      <thead>
+        <tr>
+          <th>Submitted</th><th>Symbol</th><th>Side</th><th>Qty</th><th>Status</th><th>Fill Price</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h2>Latest Strategy Actions</h2>
+    <table id="actions-table">
+      <thead>
+        <tr>
+          <th>Symbol</th><th>Signal</th><th>Order</th><th>Qty</th><th>Target Wt %</th><th>Sentiment Source</th><th>Headlines</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <script>
+      const fmtPct = (x) => (x == null ? "-" : `${(x * 100).toFixed(2)}%`);
+      const fmtNum = (x) => (x == null || Number.isNaN(Number(x)) ? "-" : Number(x).toLocaleString());
+      const fmtUsd = (x) => (x == null || Number.isNaN(Number(x)) ? "-" : `$${Number(x).toLocaleString(undefined, {maximumFractionDigits: 2})}`);
+
+      function addMetricCard(container, key, val) {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `<div class="k">${key}</div><div class="v">${val}</div>`;
+        container.appendChild(card);
+      }
+
+      async function load() {
+        const res = await fetch("./live_snapshot.json", { cache: "no-store" });
+        const data = await res.json();
+
+        document.getElementById("meta").textContent =
+          `Generated: ${data.generated_at_utc || "-"} | Symbols: ${(data.symbols || []).join(", ")}`;
+
+        const m = data.backtest_metrics || {};
+        const mg = document.getElementById("metrics-grid");
+        addMetricCard(mg, "Annual Return", fmtPct(m.annual_return));
+        addMetricCard(mg, "Sharpe", m.sharpe_ratio == null ? "-" : Number(m.sharpe_ratio).toFixed(2));
+        addMetricCard(mg, "Max Drawdown", fmtPct(m.max_drawdown));
+        addMetricCard(mg, "Win Rate", fmtPct(m.win_rate));
+        addMetricCard(mg, "Profit Factor", m.profit_factor == null ? "-" : Number(m.profit_factor).toFixed(2));
+        addMetricCard(mg, "Trades", fmtNum(m.num_trades));
+
+        const a = data.paper_account || {};
+        const ag = document.getElementById("account-grid");
+        addMetricCard(ag, "Status", a.status || "-");
+        addMetricCard(ag, "Equity", fmtUsd(a.equity));
+        addMetricCard(ag, "Cash", fmtUsd(a.cash));
+        addMetricCard(ag, "Buying Power", fmtUsd(a.buying_power));
+        addMetricCard(ag, "Day Trades", fmtNum(a.daytrade_count));
+
+        const posBody = document.querySelector("#positions-table tbody");
+        (data.positions || []).forEach((p) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${p.symbol ?? "-"}</td>
+            <td>${fmtNum(p.qty)}</td>
+            <td>${fmtUsd(p.avg_entry_price)}</td>
+            <td>${fmtUsd(p.market_value)}</td>
+            <td>${fmtUsd(p.unrealized_pl)}</td>
+          `;
+          posBody.appendChild(tr);
+        });
+
+        const ordBody = document.querySelector("#orders-table tbody");
+        (data.recent_orders || []).forEach((o) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="mono">${o.submitted_at ?? "-"}</td>
+            <td>${o.symbol ?? "-"}</td>
+            <td>${o.side ?? "-"}</td>
+            <td>${fmtNum(o.qty)}</td>
+            <td>${o.status ?? "-"}</td>
+            <td>${fmtUsd(o.filled_avg_price)}</td>
+          `;
+          ordBody.appendChild(tr);
+        });
+
+        const actBody = document.querySelector("#actions-table tbody");
+        ((data.latest_live_run || {}).actions || []).forEach((x) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${x.symbol ?? "-"}</td>
+            <td>${x.signal ?? "-"}</td>
+            <td>${x.order_side ?? "-"}</td>
+            <td>${fmtNum(x.order_qty)}</td>
+            <td>${x.target_weight_pct == null ? "-" : Number(x.target_weight_pct).toFixed(2)}</td>
+            <td>${x.sentiment_source ?? "-"}</td>
+            <td>${fmtNum(x.news_headline_count)}</td>
+          `;
+          actBody.appendChild(tr);
+        });
+      }
+
+      load().catch((err) => {
+        document.body.insertAdjacentHTML("beforeend", `<pre class="mono">Failed to load snapshot: ${String(err)}</pre>`);
+      });
+    </script>
+  </body>
+</html>

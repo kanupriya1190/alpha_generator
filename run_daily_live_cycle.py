@@ -6,6 +6,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+from generate_public_snapshot import main as generate_snapshot_main
 from live_trader import LiveTrader
 
 
@@ -18,6 +19,8 @@ def main() -> None:
     out_path = out_dir / f"run_{ts}.json"
     out_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
     print(f"Saved live run output to: {out_path}")
+    generate_snapshot_main()
+    print("Updated docs/live_snapshot.json")
 
 
 if __name__ == "__main__":

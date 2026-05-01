@@ -1,0 +1,202 @@
+{
+  "generated_at_utc": "2026-05-01T20:06:29.763979+00:00",
+  "project": "Multi-Agent Alpha Generator",
+  "symbols": [
+    "NVDA",
+    "MSFT",
+    "GOOG",
+    "TLT",
+    "CRWV",
+    "NBIS",
+    "BE"
+  ],
+  "backtest_metrics": {
+    "annual_return": 0.0408499820048398,
+    "sharpe_ratio": 1.066198531812282,
+    "max_drawdown": 0.04936817181137038,
+    "win_rate": 0.5001947798987144,
+    "profit_factor": 1.024644188458154,
+    "num_trades": 2567,
+    "generated_at_utc": "2026-05-01T19:55:40.128690+00:00"
+  },
+  "paper_account": {
+    "status": "ACTIVE",
+    "equity": 100045.45,
+    "cash": 81681.84,
+    "buying_power": 168271.0,
+    "daytrade_count": 2
+  },
+  "positions": [
+    {
+      "symbol": "BE",
+      "qty": 2.0,
+      "avg_entry_price": 278.32,
+      "market_value": 586.0,
+      "unrealized_pl": 29.36
+    },
+    {
+      "symbol": "NBIS",
+      "qty": 87.0,
+      "avg_entry_price": 152.903908,
+      "market_value": 13456.29,
+      "unrealized_pl": 153.650004
+    },
+    {
+      "symbol": "SPY",
+      "qty": 6.0,
+      "avg_entry_price": 714.95,
+      "market_value": 4321.32,
+      "unrealized_pl": 31.62
+    }
+  ],
+  "recent_orders": [
+    {
+      "symbol": "NBIS",
+      "side": "buy",
+      "qty": 19.0,
+      "status": "filled",
+      "filled_avg_price": 153.72,
+      "submitted_at": "2026-05-01T19:53:11.497623957Z"
+    },
+    {
+      "symbol": "BE",
+      "side": "sell",
+      "qty": 1.0,
+      "status": "filled",
+      "filled_avg_price": 288.06,
+      "submitted_at": "2026-05-01T18:04:25.403221Z"
+    },
+    {
+      "symbol": "NBIS",
+      "side": "buy",
+      "qty": 19.0,
+      "status": "filled",
+      "filled_avg_price": 155.4,
+      "submitted_at": "2026-05-01T18:04:25.017323Z"
+    },
+    {
+      "symbol": "BE",
+      "side": "sell",
+      "qty": 1.0,
+      "status": "filled",
+      "filled_avg_price": 286.81,
+      "submitted_at": "2026-05-01T17:16:16.31208Z"
+    },
+    {
+      "symbol": "NBIS",
+      "side": "buy",
+      "qty": 19.0,
+      "status": "filled",
+      "filled_avg_price": 154.84,
+      "submitted_at": "2026-05-01T17:16:15.938138Z"
+    },
+    {
+      "symbol": "GOOG",
+      "side": "sell",
+      "qty": 1.0,
+      "status": "filled",
+      "filled_avg_price": 382.35,
+      "submitted_at": "2026-05-01T17:16:15.560395Z"
+    },
+    {
+      "symbol": "BE",
+      "side": "buy",
+      "qty": 4.0,
+      "status": "filled",
+      "filled_avg_price": 278.32,
+      "submitted_at": "2026-05-01T14:31:27.523119Z"
+    },
+    {
+      "symbol": "NBIS",
+      "side": "buy",
+      "qty": 30.0,
+      "status": "filled",
+      "filled_avg_price": 149.58,
+      "submitted_at": "2026-05-01T14:31:27.168754Z"
+    },
+    {
+      "symbol": "GOOG",
+      "side": "buy",
+      "qty": 1.0,
+      "status": "filled",
+      "filled_avg_price": 380.39,
+      "submitted_at": "2026-05-01T14:31:26.783971Z"
+    },
+    {
+      "symbol": "MSFT",
+      "side": "sell",
+      "qty": 8.0,
+      "status": "filled",
+      "filled_avg_price": 412.53,
+      "submitted_at": "2026-05-01T14:31:26.423619Z"
+    }
+  ],
+  "latest_live_run": {
+    "file": "run_20260501T195311Z.json",
+    "actions": [
+      {
+        "symbol": "NVDA",
+        "signal": "HOLD",
+        "order_side": null,
+        "order_qty": 0,
+        "target_weight_pct": 0.0,
+        "sentiment_source": "finbert_news",
+        "news_headline_count": 20
+      },
+      {
+        "symbol": "MSFT",
+        "signal": "HOLD",
+        "order_side": null,
+        "order_qty": 0,
+        "target_weight_pct": 0.0,
+        "sentiment_source": "finbert_news",
+        "news_headline_count": 20
+      },
+      {
+        "symbol": "GOOG",
+        "signal": "BUY",
+        "order_side": null,
+        "order_qty": 0,
+        "target_weight_pct": 0.0,
+        "sentiment_source": "finbert_news",
+        "news_headline_count": 20
+      },
+      {
+        "symbol": "TLT",
+        "signal": "HOLD",
+        "order_side": null,
+        "order_qty": 0,
+        "target_weight_pct": 0.0,
+        "sentiment_source": "finbert_news",
+        "news_headline_count": 1
+      },
+      {
+        "symbol": "CRWV",
+        "signal": "BUY",
+        "order_side": null,
+        "order_qty": 0,
+        "target_weight_pct": 0.0,
+        "sentiment_source": "finbert_news",
+        "news_headline_count": 18
+      },
+      {
+        "symbol": "NBIS",
+        "signal": "BUY",
+        "order_side": "buy",
+        "order_qty": 19,
+        "target_weight_pct": 13.4565,
+        "sentiment_source": "finbert_news",
+        "news_headline_count": 4
+      },
+      {
+        "symbol": "BE",
+        "signal": "BUY",
+        "order_side": null,
+        "order_qty": 0,
+        "target_weight_pct": 0.7105,
+        "sentiment_source": "finbert_news",
+        "news_headline_count": 20
+      }
+    ]
+  }
+}

@@ -1,5 +1,14 @@
 # Multi-Agent Alpha Generator
 
+## Live Demo & Results
+
+- Live Streamlit Dashboard: _Add your deployed URL here_
+- Public Snapshot Page (for GitHub visitors): `docs/index.html`
+- Latest Snapshot JSON: `docs/live_snapshot.json`
+
+To publish the snapshot page publicly, enable GitHub Pages from repository settings:
+- Settings -> Pages -> Deploy from branch -> `main` / `/docs`
+
 End-to-end alpha system for:
 - historical backtesting,
 - live paper-trading on Alpaca,
@@ -199,6 +208,7 @@ This repo includes a scheduler script for macOS:
 
 It runs:
 - `run_daily_live_cycle.py` (live paper execution with stats-arb + rebalance)
+- `generate_public_snapshot.py` (updates `docs/live_snapshot.json`)
 
 Logs and run artifacts:
 - `outputs/launchd_daily_stdout.log`
