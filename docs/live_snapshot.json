@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-05-02T21:54:34.172266+00:00",
+  "generated_at_utc": "2026-05-02T21:57:51.071406+00:00",
   "project": "Multi-Agent Alpha Generator",
   "symbols": [
     "NVDA",
@@ -17,6 +17,8 @@
     "win_rate": 0.508881199538639,
     "profit_factor": 1.0050828887458654,
     "num_trades": 4335,
+    "start_date": "2016-05-04",
+    "end_date": "2026-05-02",
     "generated_at_utc": "2026-05-02T21:54:33.261565+00:00"
   },
   "paper_account": {

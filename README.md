@@ -18,10 +18,11 @@ Most strategy demos stop at a notebook. This project implements the full path fr
 
 Current portfolio universe: `NVDA`, `MSFT`, `GOOG`, `TLT`, `CRWV`, `NBIS`, `BE`.
 
-- Annual Return: **4.06%**
-- Sharpe Ratio: **1.04**
-- Max Drawdown: **4.94%**
-- Trades: **2,820**
+- Backtest Window: **2016-05-04 -> 2026-05-02**
+- Annual Return: **3.25%**
+- Sharpe Ratio: **1.15**
+- Max Drawdown: **4.95%**
+- Trades: **4,335**
 
 ## Live Links
 
@@ -35,6 +36,12 @@ Current portfolio universe: `NVDA`, `MSFT`, `GOOG`, `TLT`, `CRWV`, `NBIS`, `BE`.
 - **Execution-aware orchestration**: one decision layer outputs signal, confidence, and risk-clipped position size.
 - **Robust runtime behavior**: market/macro/sentiment fallbacks keep the system operable under API and dependency failures.
 - **End-to-end deployment**: backtest + API + Streamlit + scheduled live cycle in one repository.
+
+## Data Window Policy
+
+- Global backtest window is configured to `2016 -> today`.
+- For symbols that listed later (for example `CRWV`, `NBIS`), the engine starts from the first real available market date.
+- Data source priority remains: Alpaca -> yfinance -> synthetic fallback (last resort only when no market source is available).
 
 ### Alpaca Integration At A Glance
 

@@ -123,6 +123,8 @@ def generate_snapshot() -> Dict[str, Any]:
             "win_rate": metrics.get("win_rate"),
             "profit_factor": metrics.get("profit_factor"),
             "num_trades": metrics.get("num_trades"),
+            "start_date": metrics.get("start_date"),
+            "end_date": metrics.get("end_date"),
             "generated_at_utc": metrics.get("generated_at_utc"),
         },
         "paper_account": _account_snapshot(client),

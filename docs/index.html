@@ -88,6 +88,8 @@
         addMetricCard(mg, "Win Rate", fmtPct(m.win_rate));
         addMetricCard(mg, "Profit Factor", m.profit_factor == null ? "-" : Number(m.profit_factor).toFixed(2));
         addMetricCard(mg, "Trades", fmtNum(m.num_trades));
+        addMetricCard(mg, "Backtest Start", m.start_date ?? "-");
+        addMetricCard(mg, "Backtest End", m.end_date ?? "-");
 
         const a = data.paper_account || {};
         const ag = document.getElementById("account-grid");
