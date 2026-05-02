@@ -2,36 +2,39 @@
 
 [![CI](https://github.com/kanupriya1190/multi-agent_alpha_generator/actions/workflows/ci.yml/badge.svg)](https://github.com/kanupriya1190/multi-agent_alpha_generator/actions/workflows/ci.yml)
 
-## Live Demo & Results
+Production-style multi-agent trading research system that turns market, macro, and sentiment inputs into risk-managed portfolio actions, with backtesting, live paper execution, API serving, and public monitoring.
 
-- Live Streamlit Dashboard: [Open local dashboard](http://localhost:8501)
+## Why This Project
+
+Most strategy demos stop at a notebook. This project implements the full path from signal research to executable portfolio decisions:
+
+- multi-agent signal generation,
+- risk-aware orchestration and position sizing,
+- historical validation,
+- live Alpaca paper-trading,
+- and public dashboarding.
+
+## Results Snapshot
+
+Current portfolio universe: `NVDA`, `MSFT`, `GOOG`, `TLT`, `CRWV`, `NBIS`, `BE`.
+
+- Annual Return: **4.08%**
+- Sharpe Ratio: **1.07**
+- Max Drawdown: **4.94%**
+- Trades: **2,567**
+
+## Live Links
+
+- Streamlit Dashboard: [Open live dashboard](https://your-streamlit-app-url.streamlit.app)
 - Public Snapshot Page (for GitHub visitors): [Open snapshot page](https://kanupriya1190.github.io/multi-agent_alpha_generator/)
 - Latest Snapshot JSON: [Open live snapshot JSON](https://kanupriya1190.github.io/multi-agent_alpha_generator/live_snapshot.json)
 
-## Problem, Approach, Results
+## Technical Differentiators
 
-This project targets one practical question: how to generate explainable alpha signals and convert them into risk-managed paper-trading actions using live market data.  
-The approach is a multi-agent ensemble (momentum, mean reversion, sentiment, bond-yield, macro-risk) with a single orchestrator that scores, sizes, and risk-clips each decision.  
-Latest snapshot on the current symbol universe (`NVDA`, `MSFT`, `GOOG`, `TLT`, `CRWV`, `NBIS`, `BE`) shows:
-
-- Annual Return: `4.08%`
-- Sharpe Ratio: `1.07`
-- Max Drawdown: `4.94%`
-- Trades: `2,567`
-
-End-to-end alpha system for:
-- historical backtesting,
-- live paper-trading on Alpaca,
-- multi-agent signal generation,
-- risk-managed portfolio rebalancing,
-- and Streamlit monitoring.
-
-## GitHub Front Page Highlights
-
-- Multi-agent strategy with momentum, mean reversion, sentiment, bond-yield, and macro-risk agents
-- Live Alpaca paper-trading (account sync, orders, positions, and rebalancing)
-- Stats-arbitrage pair diagnostics with target-weight portfolio adjustments
-- Full backtesting + API + Streamlit dashboard in one repo
+- **Ensemble strategy design**: Momentum, Mean Reversion, Sentiment, Bond-Yield, and Macro-Risk agents.
+- **Execution-aware orchestration**: one decision layer outputs signal, confidence, and risk-clipped position size.
+- **Robust runtime behavior**: market/macro/sentiment fallbacks keep the system operable under API and dependency failures.
+- **End-to-end deployment**: backtest + API + Streamlit + scheduled live cycle in one repository.
 
 ### Alpaca Integration At A Glance
 
