@@ -11,7 +11,11 @@ import numpy as np
 import pandas as pd
 import requests
 import yfinance as yf
-from pandas_datareader import data as pdr
+try:
+    from pandas_datareader import data as pdr
+except Exception as exc:  # pragma: no cover - dependency/runtime path
+    pdr = None
+    print(f"[WARN] pandas_datareader unavailable; using macro fallback path: {exc}")
 
 from config import SETTINGS
 
@@ -153,6 +157,8 @@ class DataPipeline:
         macro_frames = []
         for alias, fred_id in series_map.items():
             try:
+                if pdr is None:
+                    raise RuntimeError("pandas_datareader import failed")
                 s = pdr.DataReader(fred_id, "fred", start, end).rename(columns={fred_id: alias})
                 macro_frames.append(s)
             except Exception as exc:  # pragma: no cover - network/runtime path
