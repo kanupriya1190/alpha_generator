@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 from typing import List
 
@@ -18,8 +18,8 @@ class Settings:
     symbols: List[str] = field(
         default_factory=lambda: ["NVDA", "MSFT", "GOOG", "TLT", "CRWV", "NBIS", "BE"]
     )
-    start_date: date = date(2020, 1, 1)
-    end_date: date = date(2025, 12, 31)
+    end_date: date = date.today()
+    start_date: date = end_date - timedelta(days=365 * 10)
 
     initial_capital: float = 100_000.0
     slippage_bps: float = 10.0  # 0.10%

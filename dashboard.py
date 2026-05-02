@@ -33,6 +33,20 @@ def _load_metrics(path: str) -> dict:
         return json.load(f)
 
 
+def _rolling_risk_metrics(equity_curve: pd.DataFrame, window_days: int) -> pd.DataFrame:
+    if equity_curve.empty or "equity" not in equity_curve.columns:
+        return pd.DataFrame()
+    out = equity_curve.copy()
+    out = out.sort_values("date")
+    out["ret_1d"] = out["equity"].pct_change()
+    roll_mean = out["ret_1d"].rolling(window_days).mean()
+    roll_std = out["ret_1d"].rolling(window_days).std()
+    out["rolling_sharpe"] = (252**0.5) * (roll_mean / roll_std.replace(0, pd.NA))
+    roll_peak = out["equity"].rolling(window_days).max()
+    out["rolling_drawdown"] = 1.0 - out["equity"] / roll_peak.replace(0, pd.NA)
+    return out[["date", "rolling_sharpe", "rolling_drawdown"]]
+
+
 tab1, tab2, tab3, tab4, tab5 = st.tabs(
     ["Backtest Results", "Signal Performance", "Agent Comparison", "Live Predictions", "Replay"]
 )
@@ -76,6 +90,19 @@ with tab1:
         indexed["equity_indexed"] = 100 * indexed["equity"] / max(start, 1e-9)
         st.caption("Indexed equity (starts at 100) to better visualize changes")
         st.line_chart(indexed.set_index("date")["equity_indexed"])
+
+        st.divider()
+        st.caption("Rolling risk metrics (moving window)")
+        window = st.selectbox(
+            "Rolling window",
+            options=[63, 126, 252],
+            index=2,
+            format_func=lambda x: f"{x} trading days (~{x/252:.1f}y)",
+        )
+        rolling = _rolling_risk_metrics(chart_df[["date", "equity"]], window)
+        if not rolling.empty:
+            st.line_chart(rolling.set_index("date")["rolling_sharpe"])
+            st.line_chart(rolling.set_index("date")["rolling_drawdown"])
     else:
         st.info("Run backtest to generate equity curve.")
 
