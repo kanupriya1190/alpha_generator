@@ -12,7 +12,11 @@ import numpy as np
 import pandas as pd
 import requests
 import yfinance as yf
-from pandas_datareader import data as pdr
+try:
+    from pandas_datareader import data as pdr
+except Exception as exc:  # pragma: no cover - dependency/runtime path
+    pdr = None
+    print(f"[WARN] pandas_datareader unavailable in live_trader; using macro fallback path: {exc}")
 
 from config import SETTINGS
 from news_sentiment import FinBERTNewsSentiment
@@ -119,6 +123,8 @@ def _fetch_live_macro_features() -> Dict[str, float]:
     end = datetime.utcnow()
     start = end - timedelta(days=90)
     try:
+        if pdr is None:
+            raise RuntimeError("pandas_datareader import failed")
         dgs10 = pdr.DataReader("DGS10", "fred", start, end)["DGS10"].dropna()
         dgs2 = pdr.DataReader("DGS2", "fred", start, end)["DGS2"].dropna()
         fed = pdr.DataReader("FEDFUNDS", "fred", start, end)["FEDFUNDS"].dropna()
