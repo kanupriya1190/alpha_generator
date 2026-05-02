@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-05-01T20:06:29.763979+00:00",
+  "generated_at_utc": "2026-05-02T21:15:35.641463+00:00",
   "project": "Multi-Agent Alpha Generator",
   "symbols": [
     "NVDA",
@@ -17,13 +17,13 @@
     "win_rate": 0.5001947798987144,
     "profit_factor": 1.024644188458154,
     "num_trades": 2567,
-    "generated_at_utc": "2026-05-01T19:55:40.128690+00:00"
+    "generated_at_utc": "2026-05-02T21:15:22.486282+00:00"
   },
   "paper_account": {
     "status": "ACTIVE",
-    "equity": 100045.45,
-    "cash": 81681.84,
-    "buying_power": 168271.0,
+    "equity": 100027.4,
+    "cash": 81681.83,
+    "buying_power": 162382.2,
     "daytrade_count": 2
   },
   "positions": [
@@ -31,32 +31,48 @@
       "symbol": "BE",
       "qty": 2.0,
       "avg_entry_price": 278.32,
-      "market_value": 586.0,
-      "unrealized_pl": 29.36
+      "market_value": 581.04,
+      "unrealized_pl": 24.4
     },
     {
       "symbol": "NBIS",
       "qty": 87.0,
       "avg_entry_price": 152.903908,
-      "market_value": 13456.29,
-      "unrealized_pl": 153.650004
+      "market_value": 13440.63,
+      "unrealized_pl": 137.990004
     },
     {
       "symbol": "SPY",
       "qty": 6.0,
       "avg_entry_price": 714.95,
-      "market_value": 4321.32,
-      "unrealized_pl": 31.62
+      "market_value": 4323.9,
+      "unrealized_pl": 34.2
     }
   ],
   "recent_orders": [
+    {
+      "symbol": "BE",
+      "side": "sell",
+      "qty": 1.0,
+      "status": "accepted",
+      "filled_avg_price": 0.0,
+      "submitted_at": "2026-05-01T23:53:51.542954Z"
+    },
+    {
+      "symbol": "NBIS",
+      "side": "buy",
+      "qty": 19.0,
+      "status": "accepted",
+      "filled_avg_price": 0.0,
+      "submitted_at": "2026-05-01T23:53:51.173247Z"
+    },
     {
       "symbol": "NBIS",
       "side": "buy",
       "qty": 19.0,
       "status": "filled",
       "filled_avg_price": 153.72,
-      "submitted_at": "2026-05-01T19:53:11.497623957Z"
+      "submitted_at": "2026-05-01T19:53:11.497624Z"
     },
     {
       "symbol": "BE",
@@ -113,22 +129,6 @@
       "status": "filled",
       "filled_avg_price": 149.58,
       "submitted_at": "2026-05-01T14:31:27.168754Z"
-    },
-    {
-      "symbol": "GOOG",
-      "side": "buy",
-      "qty": 1.0,
-      "status": "filled",
-      "filled_avg_price": 380.39,
-      "submitted_at": "2026-05-01T14:31:26.783971Z"
-    },
-    {
-      "symbol": "MSFT",
-      "side": "sell",
-      "qty": 8.0,
-      "status": "filled",
-      "filled_avg_price": 412.53,
-      "submitted_at": "2026-05-01T14:31:26.423619Z"
     }
   ],
   "latest_live_run": {
