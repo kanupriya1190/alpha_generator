@@ -31,6 +31,29 @@ def _to_utc_timestamp(date_like: datetime | pd.Timestamp) -> pd.Timestamp:
 class DataPipeline:
     """Fetches market, macro, and sentiment data and stores artifacts."""
 
+    @staticmethod
+    def _has_reasonable_coverage(df: pd.DataFrame, start: datetime, end: datetime, tolerance_days: int = 7) -> bool:
+        if df.empty or "date" not in df.columns:
+            return False
+        d = pd.to_datetime(df["date"], errors="coerce").dropna()
+        if d.empty:
+            return False
+        min_dt = pd.Timestamp(d.min())
+        max_dt = pd.Timestamp(d.max())
+        if min_dt.tz is not None:
+            min_dt = min_dt.tz_convert(None)
+        if max_dt.tz is not None:
+            max_dt = max_dt.tz_convert(None)
+        start_ts = pd.Timestamp(start)
+        end_ts = pd.Timestamp(end)
+        if start_ts.tz is not None:
+            start_ts = start_ts.tz_convert(None)
+        if end_ts.tz is not None:
+            end_ts = end_ts.tz_convert(None)
+        return (min_dt <= start_ts + pd.Timedelta(days=tolerance_days)) and (
+            max_dt >= end_ts - pd.Timedelta(days=tolerance_days)
+        )
+
     def fetch_market_data(self, symbols: Iterable[str], start: datetime, end: datetime) -> pd.DataFrame:
         frames: List[pd.DataFrame] = []
         for symbol in symbols:
@@ -44,11 +67,15 @@ class DataPipeline:
     def _fetch_market_for_symbol(self, symbol: str, start: datetime, end: datetime) -> pd.DataFrame:
         if SETTINGS.alpaca_api_key and SETTINGS.alpaca_secret_key:
             try:
-                return self._fetch_market_alpaca(symbol, start, end)
+                df = self._fetch_market_alpaca(symbol, start, end)
+                if not self._has_reasonable_coverage(df, start, end):
+                    raise ValueError("Alpaca data coverage is incomplete for requested window")
+                return df
             except Exception as exc:  # pragma: no cover - network/runtime path
                 print(f"[WARN] Alpaca fetch failed for {symbol}: {exc}. Falling back to yfinance.")
         try:
-            return self._fetch_market_yfinance(symbol, start, end)
+            df = self._fetch_market_yfinance(symbol, start, end)
+            return df
         except Exception as exc:  # pragma: no cover - network/runtime path
             print(f"[WARN] yfinance fetch failed for {symbol}: {exc}. Using synthetic market data.")
             return self._generate_synthetic_market_data(symbol, start, end)

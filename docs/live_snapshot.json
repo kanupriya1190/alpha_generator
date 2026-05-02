@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-05-02T21:18:01.138281+00:00",
+  "generated_at_utc": "2026-05-02T21:54:34.172266+00:00",
   "project": "Multi-Agent Alpha Generator",
   "symbols": [
     "NVDA",
@@ -11,13 +11,13 @@
     "BE"
   ],
   "backtest_metrics": {
-    "annual_return": 0.0406233884489835,
-    "sharpe_ratio": 1.0395482213790623,
-    "max_drawdown": 0.04936817181137038,
-    "win_rate": 0.4939716312056738,
-    "profit_factor": 0.9981343439056946,
-    "num_trades": 2820,
-    "generated_at_utc": "2026-05-02T21:17:54.285328+00:00"
+    "annual_return": 0.03253024758601453,
+    "sharpe_ratio": 1.1476525850362922,
+    "max_drawdown": 0.04946473993856056,
+    "win_rate": 0.508881199538639,
+    "profit_factor": 1.0050828887458654,
+    "num_trades": 4335,
+    "generated_at_utc": "2026-05-02T21:54:33.261565+00:00"
   },
   "paper_account": {
     "status": "ACTIVE",

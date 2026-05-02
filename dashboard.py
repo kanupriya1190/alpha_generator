@@ -82,6 +82,12 @@ with tab1:
     if not equity_curve.empty:
         chart_df = equity_curve.copy()
         chart_df["date"] = pd.to_datetime(chart_df["date"])
+        chart_df = chart_df.dropna(subset=["date"]).sort_values("date")
+        if not chart_df.empty:
+            st.caption(
+                "Effective data window: "
+                f"{chart_df['date'].iloc[0].date()} -> {chart_df['date'].iloc[-1].date()}"
+            )
         st.caption("Absolute equity ($)")
         st.line_chart(chart_df.set_index("date")["equity"])
 
