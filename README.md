@@ -1,10 +1,23 @@
 # Multi-Agent Alpha Generator
 
+[![CI](https://github.com/kanupriya1190/multi-agent_alpha_generator/actions/workflows/ci.yml/badge.svg)](https://github.com/kanupriya1190/multi-agent_alpha_generator/actions/workflows/ci.yml)
+
 ## Live Demo & Results
 
 - Live Streamlit Dashboard: [Open local dashboard](http://localhost:8501)
 - Public Snapshot Page (for GitHub visitors): [Open snapshot page](https://kanupriya1190.github.io/multi-agent_alpha_generator/)
 - Latest Snapshot JSON: [Open live snapshot JSON](https://kanupriya1190.github.io/multi-agent_alpha_generator/live_snapshot.json)
+
+## Problem, Approach, Results
+
+This project targets one practical question: how to generate explainable alpha signals and convert them into risk-managed paper-trading actions using live market data.  
+The approach is a multi-agent ensemble (momentum, mean reversion, sentiment, bond-yield, macro-risk) with a single orchestrator that scores, sizes, and risk-clips each decision.  
+Latest snapshot on the current symbol universe (`NVDA`, `MSFT`, `GOOG`, `TLT`, `CRWV`, `NBIS`, `BE`) shows:
+
+- Annual Return: `4.08%`
+- Sharpe Ratio: `1.07`
+- Max Drawdown: `4.94%`
+- Trades: `2,567`
 
 End-to-end alpha system for:
 - historical backtesting,
@@ -55,6 +68,19 @@ Configured symbols (in `config.py`):
 ---
 
 ## Architecture
+
+```mermaid
+flowchart LR
+    A[Market + Macro + News Inputs] --> B[data_pipeline.py]
+    B --> C[features.py]
+    C --> D[agents.py]
+    D --> E[orchestrator.py]
+    E --> F[backtester.py]
+    E --> G[live_trader.py]
+    G --> H[Alpaca Paper Orders]
+    F --> I[outputs/metrics.json + trades + equity]
+    I --> J[dashboard.py + docs/live_snapshot.json]
+```
 
 - `config.py` - central settings (symbols, dates, risk limits, paths, keys)
 - `data_pipeline.py` - market/macro/sentiment data ingestion + storage
@@ -142,6 +168,16 @@ Set keys in `.env`:
 - `NEWS_API_KEY` (used for FinBERT headline sentiment in live mode)
 
 Never commit `.env`.
+
+## Testing & CI
+
+Run tests locally:
+
+```bash
+pytest
+```
+
+CI runs on every push/PR via GitHub Actions using `.github/workflows/ci.yml`.
 
 ---
 
@@ -281,3 +317,15 @@ curl -X POST http://127.0.0.1:8000/paper/run-once \
 - Market data priority: Alpaca -> yfinance -> synthetic fallback.
 - Macro data priority: FRED -> fallback constants.
 - Live mode uses NewsAPI headlines + FinBERT sentiment scoring, with proxy fallback if unavailable.
+
+## Known Limitations
+
+- Backtest execution is daily-bar based and does not model intraday microstructure.
+- Fallback paths prioritize robustness over strict realism when APIs are unavailable.
+- Sentiment quality depends on NewsAPI coverage and FinBERT model availability.
+
+## Roadmap
+
+- Add explicit transaction-cost stress tests by volatility regime.
+- Add benchmark comparison panels (SPY, QQQ, risk parity) in dashboard.
+- Add scheduled retraining/parameter calibration jobs with drift checks.
