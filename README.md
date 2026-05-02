@@ -26,7 +26,7 @@ Current portfolio universe: `NVDA`, `MSFT`, `GOOG`, `TLT`, `CRWV`, `NBIS`, `BE`.
 
 ## Live Links
 
-- Streamlit Dashboard: [Open live dashboard](https://your-streamlit-app-url.streamlit.app)
+- Streamlit Dashboard: [Open live dashboard](https://alphagenerator-xzwbs6aetmtgs7f28nbt2i.streamlit.app/)
 - Public Snapshot Page (for GitHub visitors): [Open snapshot page](https://kanupriya1190.github.io/multi-agent_alpha_generator/)
 - Latest Snapshot JSON: [Open live snapshot JSON](https://kanupriya1190.github.io/multi-agent_alpha_generator/live_snapshot.json)
 
