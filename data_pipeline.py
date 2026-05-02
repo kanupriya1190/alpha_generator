@@ -216,7 +216,8 @@ class DataPipeline:
         clean = clean.drop_duplicates(subset=["symbol", "date"]).sort_values(["symbol", "date"])
         for col in ["open", "high", "low", "close", "volume"]:
             clean[col] = pd.to_numeric(clean[col], errors="coerce")
-        clean = clean.groupby("symbol", group_keys=False).apply(lambda x: x.ffill().bfill())
+        fill_cols = [c for c in ["open", "high", "low", "close", "volume", "vwap", "trade_count"] if c in clean.columns]
+        clean[fill_cols] = clean.groupby("symbol")[fill_cols].transform(lambda x: x.ffill().bfill())
         clean = clean[clean["close"] > 0]
         return clean.reset_index(drop=True)
 
@@ -226,10 +227,14 @@ class DataPipeline:
         macro = macro.copy()
         sentiment = sentiment.copy()
 
+        if "symbol" not in market.columns and "symbol" in getattr(market.index, "names", []):
+            market = market.reset_index()
         if "symbol" not in market.columns:
             market = market.reset_index()
         if "symbol" not in market.columns and "symbol_x" in market.columns:
             market["symbol"] = market["symbol_x"]
+        if "symbol" not in market.columns and "level_0" in market.columns:
+            market["symbol"] = market["level_0"]
 
         # Streamlit Cloud/runtime variants can produce missing columns; repair shape defensively.
         if "date" not in macro.columns:
@@ -256,10 +261,14 @@ class DataPipeline:
         sentiment["date"] = pd.to_datetime(sentiment["date"]).dt.normalize()
 
         merged = market.merge(macro, on="date", how="left")
+        if "symbol" not in merged.columns and "symbol" in getattr(merged.index, "names", []):
+            merged = merged.reset_index()
         if "symbol" not in merged.columns and "symbol_x" in merged.columns:
             merged["symbol"] = merged["symbol_x"]
         if "symbol" not in merged.columns and "symbol_y" in merged.columns:
             merged["symbol"] = merged["symbol_y"]
+        if "symbol" not in merged.columns and "level_0" in merged.columns:
+            merged["symbol"] = merged["level_0"]
         # Final guardrail for Cloud runtime key-shape quirks: never crash on sentiment merge.
         if "date" not in merged.columns and "date_x" in merged.columns:
             merged["date"] = merged["date_x"]
