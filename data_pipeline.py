@@ -267,7 +267,16 @@ class DataPipeline:
             merged["date"] = merged["date_y"]
 
         if {"date", "symbol"}.issubset(merged.columns) and {"date", "symbol"}.issubset(sentiment.columns):
-            merged = merged.merge(sentiment, on=["date", "symbol"], how="left")
+            try:
+                merged = merged.merge(sentiment, on=["date", "symbol"], how="left")
+            except KeyError as exc:
+                print(f"[WARN] Sentiment merge key error ({exc}); falling back to date-only sentiment merge.")
+                date_sent = (
+                    sentiment.groupby("date", as_index=False)["sentiment_score"].mean()
+                    if "date" in sentiment.columns and "sentiment_score" in sentiment.columns
+                    else pd.DataFrame(columns=["date", "sentiment_score"])
+                )
+                merged = merged.merge(date_sent, on="date", how="left")
         else:
             print(
                 "[WARN] Skipping sentiment merge due to missing keys. "
