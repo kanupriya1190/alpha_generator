@@ -177,7 +177,14 @@ class DataPipeline:
 
         vix = yf.download("^VIX", start=start, end=end, auto_adjust=False, progress=False)
         if not vix.empty:
-            macro["vix"] = vix["Close"]
+            if isinstance(vix.columns, pd.MultiIndex):
+                vix.columns = [str(c[0]).lower() for c in vix.columns]
+            else:
+                vix.columns = [str(c).lower() for c in vix.columns]
+            if "close" in vix.columns:
+                macro["vix"] = vix["close"]
+            else:
+                macro["vix"] = 20.0
         else:
             macro["vix"] = 20.0
 
@@ -218,12 +225,30 @@ class DataPipeline:
         market = market.copy()
         macro = macro.copy()
         sentiment = sentiment.copy()
+
+        # Streamlit Cloud/runtime variants can produce missing columns; repair shape defensively.
+        if "date" not in macro.columns:
+            macro = pd.DataFrame({"date": market["date"].drop_duplicates().sort_values()})
+        if "date" not in sentiment.columns:
+            sentiment = market[["date", "symbol"]].copy()
+            sentiment["sentiment_score"] = 0.5
+        if "symbol" not in sentiment.columns:
+            sentiment = sentiment.merge(
+                market[["date", "symbol"]].drop_duplicates(), on="date", how="left"
+            )
+        if "sentiment_score" not in sentiment.columns:
+            sentiment["sentiment_score"] = 0.5
+
         market["date"] = pd.to_datetime(market["date"]).dt.normalize()
         macro["date"] = pd.to_datetime(macro["date"]).dt.normalize()
         sentiment["date"] = pd.to_datetime(sentiment["date"]).dt.normalize()
 
         merged = market.merge(macro, on="date", how="left")
         merged = merged.merge(sentiment, on=["date", "symbol"], how="left")
+        for col, fallback in {"dgs10": 3.0, "dgs2": 2.0, "cpi": 275.0, "fedfunds": 2.5, "vix": 20.0}.items():
+            if col not in merged.columns:
+                merged[col] = fallback
+            merged[col] = pd.to_numeric(merged[col], errors="coerce").fillna(fallback)
         merged["sentiment_score"] = merged["sentiment_score"].fillna(0.5)
         merged = merged.sort_values(["symbol", "date"]).ffill().bfill()
         return merged
