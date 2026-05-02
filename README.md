@@ -18,10 +18,10 @@ Most strategy demos stop at a notebook. This project implements the full path fr
 
 Current portfolio universe: `NVDA`, `MSFT`, `GOOG`, `TLT`, `CRWV`, `NBIS`, `BE`.
 
-- Annual Return: **4.08%**
-- Sharpe Ratio: **1.07**
+- Annual Return: **4.06%**
+- Sharpe Ratio: **1.04**
 - Max Drawdown: **4.94%**
-- Trades: **2,567**
+- Trades: **2,820**
 
 ## Live Links
 

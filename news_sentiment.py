@@ -12,12 +12,6 @@ import requests
 
 from config import SETTINGS
 
-try:
-    from transformers import pipeline
-except Exception:  # pragma: no cover - optional dependency path
-    pipeline = None  # type: ignore[assignment]
-
-
 SYMBOL_QUERY_ALIASES: Dict[str, List[str]] = {
     "NVDA": ["NVIDIA", "NVDA"],
     "MSFT": ["Microsoft", "MSFT"],
@@ -47,16 +41,22 @@ class FinBERTNewsSentiment:
     max_headlines: int = 20
     _pipe: object | None = field(default=None, init=False, repr=False)
     _cache: Dict[str, Tuple[float, float, int]] = field(default_factory=dict, init=False, repr=False)
+    _pipeline_failed: bool = field(default=False, init=False, repr=False)
 
     def _load_pipeline(self) -> object | None:
         if self._pipe is not None:
             return self._pipe
-        if pipeline is None:
+        if self._pipeline_failed:
             return None
         try:
-            self._pipe = pipeline("text-classification", model=self.model_name, tokenizer=self.model_name)
+            # Lazy import avoids Streamlit Cloud watcher probing all transformers
+            # submodules (which can trigger optional torchvision errors).
+            from transformers import pipeline as hf_pipeline
+
+            self._pipe = hf_pipeline("text-classification", model=self.model_name, tokenizer=self.model_name)
             return self._pipe
         except Exception:
+            self._pipeline_failed = True
             return None
 
     def _news_api_key(self) -> str:
