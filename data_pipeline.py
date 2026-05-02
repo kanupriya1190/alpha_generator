@@ -260,7 +260,20 @@ class DataPipeline:
             merged["symbol"] = merged["symbol_x"]
         if "symbol" not in merged.columns and "symbol_y" in merged.columns:
             merged["symbol"] = merged["symbol_y"]
-        merged = merged.merge(sentiment, on=["date", "symbol"], how="left")
+        # Final guardrail for Cloud runtime key-shape quirks: never crash on sentiment merge.
+        if "date" not in merged.columns and "date_x" in merged.columns:
+            merged["date"] = merged["date_x"]
+        if "date" not in merged.columns and "date_y" in merged.columns:
+            merged["date"] = merged["date_y"]
+
+        if {"date", "symbol"}.issubset(merged.columns) and {"date", "symbol"}.issubset(sentiment.columns):
+            merged = merged.merge(sentiment, on=["date", "symbol"], how="left")
+        else:
+            print(
+                "[WARN] Skipping sentiment merge due to missing keys. "
+                f"merged_cols={list(merged.columns)} sentiment_cols={list(sentiment.columns)}"
+            )
+            merged["sentiment_score"] = 0.5
         for col, fallback in {"dgs10": 3.0, "dgs2": 2.0, "cpi": 275.0, "fedfunds": 2.5, "vix": 20.0}.items():
             if col not in merged.columns:
                 merged[col] = fallback
