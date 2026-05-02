@@ -226,24 +226,40 @@ class DataPipeline:
         macro = macro.copy()
         sentiment = sentiment.copy()
 
+        if "symbol" not in market.columns:
+            market = market.reset_index()
+        if "symbol" not in market.columns and "symbol_x" in market.columns:
+            market["symbol"] = market["symbol_x"]
+
         # Streamlit Cloud/runtime variants can produce missing columns; repair shape defensively.
         if "date" not in macro.columns:
             macro = pd.DataFrame({"date": market["date"].drop_duplicates().sort_values()})
+        if "symbol" in macro.columns:
+            macro = macro.drop(columns=["symbol"])
         if "date" not in sentiment.columns:
             sentiment = market[["date", "symbol"]].copy()
             sentiment["sentiment_score"] = 0.5
+        if "symbol" not in sentiment.columns and "symbol_x" in sentiment.columns:
+            sentiment["symbol"] = sentiment["symbol_x"]
+        if "symbol" not in sentiment.columns and "symbol_y" in sentiment.columns:
+            sentiment["symbol"] = sentiment["symbol_y"]
         if "symbol" not in sentiment.columns:
             sentiment = sentiment.merge(
                 market[["date", "symbol"]].drop_duplicates(), on="date", how="left"
             )
         if "sentiment_score" not in sentiment.columns:
             sentiment["sentiment_score"] = 0.5
+        sentiment = sentiment[["date", "symbol", "sentiment_score"]].drop_duplicates(["date", "symbol"])
 
         market["date"] = pd.to_datetime(market["date"]).dt.normalize()
         macro["date"] = pd.to_datetime(macro["date"]).dt.normalize()
         sentiment["date"] = pd.to_datetime(sentiment["date"]).dt.normalize()
 
         merged = market.merge(macro, on="date", how="left")
+        if "symbol" not in merged.columns and "symbol_x" in merged.columns:
+            merged["symbol"] = merged["symbol_x"]
+        if "symbol" not in merged.columns and "symbol_y" in merged.columns:
+            merged["symbol"] = merged["symbol_y"]
         merged = merged.merge(sentiment, on=["date", "symbol"], how="left")
         for col, fallback in {"dgs10": 3.0, "dgs2": 2.0, "cpi": 275.0, "fedfunds": 2.5, "vix": 20.0}.items():
             if col not in merged.columns:
